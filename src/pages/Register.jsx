@@ -20,7 +20,7 @@ export default function Register() {
 
       const response =
         await axios.post(
-          "http://localhost:5000/register",
+          "https://otp-authentication-3.onrender.com/register",
           form
         );
 

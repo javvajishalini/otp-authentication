@@ -28,7 +28,7 @@ export default function Home() {
           className="google-btn"
           onClick={() =>
             window.location.href =
-              "http://localhost:5000/auth/google"
+              "https://otp-authentication-3.onrender.com/auth/google"
           }
         >
           Sign in with Google

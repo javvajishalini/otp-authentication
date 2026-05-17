@@ -11,7 +11,7 @@ export default function Dashboard() {
     const fetchUser = async () => {
       try {
         // Try to fetch session from backend (for Google OAuth)
-        const res = await axios.get("http://localhost:5000/auth/login/success", {
+        const res = await axios.get("https://otp-authentication-3.onrender.com/auth/login/success", {
           withCredentials: true,
         });
         
