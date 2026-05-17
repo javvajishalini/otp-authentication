@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import logo from "../assets/logo.jpg";
 
 export default function Home() {
 
@@ -8,7 +9,7 @@ export default function Home() {
     <div className="container">
       <div className="card">
 
-        <div className="icon">🔒</div>
+        <img src={logo} alt="OTP Authentication Logo" className="logo" style={{ width: '80px', marginBottom: '10px' }} />
 
         <h1>OTP Authentication System</h1>
 
