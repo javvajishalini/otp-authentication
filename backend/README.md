@@ -1,0 +1,88 @@
+# OTP Authentication System
+
+A full-stack web application that provides a secure OTP (One-Time Password) based authentication system along with Google OAuth integration.
+
+## Features
+
+- **User Registration:** Secure account creation with password hashing (bcryptjs).
+- **OTP-based Login:** Users authenticate by receiving a One-Time Password via email.
+- **Email Delivery:** Integrated with Nodemailer to securely deliver OTPs to user email addresses.
+- **Google OAuth Login:** Alternative sign-in option using Google accounts (Passport.js).
+- **Light/Dark Mode Theme:** The frontend UI includes a seamless theme toggle for better user experience.
+
+## Tech Stack
+
+### Frontend
+- **React 19**
+- **Vite**
+- **React Router DOM** (for navigation)
+- **Axios** (for API requests)
+- **CSS** (with CSS variables for light/dark theme)
+
+### Backend
+- **Node.js & Express.js**
+- **MongoDB** & **Mongoose** (Database and ODM)
+- **Nodemailer** (Email sending service)
+- **bcryptjs** (Password hashing)
+- **Passport.js & passport-google-oauth20** (Google OAuth support)
+- **Express-session**
+
+## Project Structure
+
+```
+otp-authentication/
+├── backend/               # Node.js Express backend
+│   ├── .env               # Environment variables
+│   ├── package.json       # Backend dependencies
+│   └── server.js          # Main Express server, database connection, and API routes
+├── src/                   # React frontend
+│   ├── App.jsx            # Application routing and Theme toggle
+│   ├── index.css          # Global styles including light/dark theme variables
+│   ├── main.jsx           # React entry point
+│   └── ...components/pages
+├── package.json           # Frontend dependencies
+└── vite.config.js         # Vite configuration
+```
+
+## Setup Instructions
+
+### 1. Backend Setup
+
+Navigate to the backend directory:
+```bash
+cd backend
+npm install
+```
+
+Create a `.env` file in the `backend` directory and add the following variables:
+```env
+PORT=5000
+MONGO_URI=your_mongodb_connection_string
+EMAIL=your_email@gmail.com
+EMAIL_PASS=your_email_app_password
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+```
+
+Start the backend server:
+```bash
+npm start
+```
+
+### 2. Frontend Setup
+
+Open a new terminal and navigate to the project root directory:
+```bash
+npm install
+```
+
+Start the React development server:
+```bash
+npm run dev
+```
+
+## Recent Updates
+- Implemented Dark Mode / Light Mode theme toggle on the frontend.
+- Added OTP email delivery and verification endpoints.
+- Integrated MongoDB database for user management.
+- Configured Google OAuth login strategy.
