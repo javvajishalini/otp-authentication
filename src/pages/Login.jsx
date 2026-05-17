@@ -17,7 +17,7 @@ export default function Login() {
     try {
 
       await axios.post(
-        "https://otp-authentication-3.onrender.com/send-otp",
+        `${import.meta.env.VITE_BACKEND_URL}/send-otp`,
         {
           email,
           password,

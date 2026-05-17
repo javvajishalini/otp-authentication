@@ -20,7 +20,7 @@ export default function Register() {
 
       const response =
         await axios.post(
-          "https://otp-authentication-3.onrender.com/register",
+          `${import.meta.env.VITE_BACKEND_URL}/register`,
           form
         );
 

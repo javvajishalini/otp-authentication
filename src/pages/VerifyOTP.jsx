@@ -18,7 +18,7 @@ export default function VerifyOTP() {
         localStorage.getItem("email");
 
       const res = await axios.post(
-        "https://otp-authentication-3.onrender.com/verify-otp",
+        `${import.meta.env.VITE_BACKEND_URL}/verify-otp`,
         {
           email,
           otp,
