@@ -44,7 +44,7 @@ export default function Dashboard() {
     <div className="container">
       <div className="card">
         <h1>Welcome Back</h1>
-        <h2>{user?.name}</h2>
+        <h2>{user?.name ? user.name.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ') : ""}</h2>
         <div className="verified">
           ✅ Verified Successfully
         </div>

@@ -103,6 +103,12 @@ passport.use(new GoogleStrategy({
           name: profile.displayName,
           email: profile.emails[0].value
         });
+      } else {
+        // Update name to full Google Display Name if they had registered with a partial name earlier
+        if (user.name !== profile.displayName) {
+          user.name = profile.displayName;
+          await user.save();
+        }
       }
 
       return done(null, user);
