@@ -13,11 +13,11 @@ export default function Register() {
     email: "",
     password: "",
   });
+  const [loading, setLoading] = useState(false);
 
   const registerUser = async () => {
-
+    setLoading(true);
     try {
-
       const response =
         await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/register`,
@@ -26,27 +26,22 @@ export default function Register() {
         );
 
       alert(response.data.message);
-
       navigate("/login");
-
     } catch (err) {
-
       console.log(err);
-
       if (
         err.response &&
         err.response.data &&
         err.response.data.message
       ) {
-
         alert(
           err.response.data.message
         );
-
       } else {
-
         alert("Registration failed");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -103,8 +98,9 @@ export default function Register() {
         <button
           className="signin-btn"
           onClick={registerUser}
+          disabled={loading}
         >
-          Create Account
+          {loading ? "Creating..." : "Create Account"}
         </button>
 
       </div>

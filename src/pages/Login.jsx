@@ -11,12 +11,12 @@ export default function Login() {
   const [email, setEmail] = useState("");
 
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
 
   const sendOTP = async () => {
-
+    setLoading(true);
     try {
-
       await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/send-otp`,
         {
@@ -27,14 +27,12 @@ export default function Login() {
       );
 
       localStorage.setItem("email", email);
-
       alert("OTP sent successfully");
-
       navigate("/verify");
-
     } catch (err) {
-
       alert(err.response?.data?.message || "Failed to send OTP. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -74,8 +72,9 @@ export default function Login() {
         <button
           className="signin-btn"
           onClick={sendOTP}
+          disabled={loading}
         >
-          Send Code
+          {loading ? "Sending..." : "Send Code"}
         </button>
 
       </div>
