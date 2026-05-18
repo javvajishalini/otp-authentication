@@ -297,7 +297,8 @@ app.post("/send-otp", authLimiter, async (req, res) => {
         user_email: email,
         reply_to: email,
         message: `Your OTP is ${otp}`,
-        otp: otp
+        otp: otp,
+        OTP: otp
       }
     };
 
