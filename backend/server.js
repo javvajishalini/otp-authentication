@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const { Resend } = require("resend");
+
 const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
 const helmet = require("helmet");
@@ -208,23 +208,21 @@ app.post("/register", authLimiter, async (req, res) => {
 
     }
 
-    const existingUser = await User.findOne({ email });
-
-    if (existingUser) {
-
-      return res.status(400).json({
-        message: "Email already exists"
-      });
-
+    let user = await User.findOne({ email });
+    if (user) {
+      if (!user.password) {
+        // User exists from Google Sign In, add the password so they can use Email/Password flow
+        user.password = await bcrypt.hash(password, 10);
+        await user.save();
+        return res.status(201).json({ message: "Password added to existing account! You can now Sign In." });
+      } else {
+        return res.status(400).json({ message: "Email already exists" });
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    await User.create({
-      name,
-      email,
-      password: hashedPassword
-    });
+    user = new User({ name, email, password: hashedPassword });
+    await user.save();
 
     res.status(201).json({
       message: "Registered Successfully"
@@ -288,19 +286,29 @@ app.post("/send-otp", authLimiter, async (req, res) => {
 
     await user.save();
 
-    /* FIXED NODEMAILER TO RESEND */
-
-    const resend = new Resend(process.env.RESEND_API_KEY);
+    /* FIXED NODEMAILER TO EMAILJS */
     
-    const { data, error } = await resend.emails.send({
-      from: "onboarding@resend.dev",
-      to: email,
-      subject: "OTP Verification",
-      text: `Your OTP is ${otp}`
+    const emailJsPayload = {
+      service_id: process.env.EMAILJS_SERVICE_ID,
+      template_id: process.env.EMAILJS_TEMPLATE_ID,
+      user_id: process.env.EMAILJS_PUBLIC_KEY,
+      accessToken: process.env.EMAILJS_PRIVATE_KEY,
+      template_params: {
+        to_email: email,
+        message: `Your OTP is ${otp}`,
+        otp: otp
+      }
+    };
+
+    const emailJsResponse = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(emailJsPayload)
     });
 
-    if (error) {
-      console.log("RESEND ERROR:", error);
+    if (!emailJsResponse.ok) {
+      const errorText = await emailJsResponse.text();
+      console.log("EMAILJS ERROR:", errorText);
       return res.status(500).json({ message: "OTP Failed" });
     }
 
