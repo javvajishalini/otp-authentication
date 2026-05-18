@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
 const helmet = require("helmet");
@@ -288,24 +288,21 @@ app.post("/send-otp", authLimiter, async (req, res) => {
 
     await user.save();
 
-    /* FIXED NODEMAILER */
+    /* FIXED NODEMAILER TO RESEND */
 
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      auth: {
-        user: process.env.EMAIL,
-        pass: process.env.EMAIL_PASS
-      }
-    });
-
-    await transporter.sendMail({
-      from: process.env.EMAIL,
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    
+    const { data, error } = await resend.emails.send({
+      from: "onboarding@resend.dev",
       to: email,
       subject: "OTP Verification",
       text: `Your OTP is ${otp}`
     });
+
+    if (error) {
+      console.log("RESEND ERROR:", error);
+      return res.status(500).json({ message: "OTP Failed" });
+    }
 
     res.json({
       message: "OTP Sent Successfully"
