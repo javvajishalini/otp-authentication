@@ -12,6 +12,7 @@ export default function Login() {
 
   const [password, setPassword] = useState("");
 
+
   const sendOTP = async () => {
 
     try {
@@ -21,7 +22,8 @@ export default function Login() {
         {
           email,
           password,
-        }
+        },
+        { withCredentials: true }
       );
 
       localStorage.setItem("email", email);
@@ -32,7 +34,7 @@ export default function Login() {
 
     } catch (err) {
 
-      alert(err.response.data.message);
+      alert(err.response?.data?.message || "Failed to send OTP. Please try again.");
     }
   };
 

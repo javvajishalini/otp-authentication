@@ -21,7 +21,8 @@ export default function Register() {
       const response =
         await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/register`,
-          form
+          form,
+          { withCredentials: true }
         );
 
       alert(response.data.message);

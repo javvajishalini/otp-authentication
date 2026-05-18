@@ -22,7 +22,8 @@ export default function VerifyOTP() {
         {
           email,
           otp,
-        }
+        },
+        { withCredentials: true }
       );
 
       localStorage.setItem(
@@ -34,7 +35,7 @@ export default function VerifyOTP() {
 
     } catch (err) {
 
-      alert("Invalid OTP");
+      alert(err.response?.data?.message || "Invalid OTP or network error");
     }
   };
 

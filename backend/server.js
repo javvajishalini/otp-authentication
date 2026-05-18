@@ -35,8 +35,20 @@ app.set("trust proxy", 1);
 
 app.use(helmet());
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 
@@ -184,6 +196,24 @@ passport.deserializeUser(
 ========================= */
 
 app.get(
+  "/auth/login/success",
+  (req, res) => {
+    if (req.user) {
+      res.status(200).json({
+        success: true,
+        message: "successful",
+        user: req.user,
+      });
+    } else {
+      res.status(401).json({
+        success: false,
+        message: "Not Authenticated",
+      });
+    }
+  }
+);
+
+app.get(
 
   "/auth/google",
 
@@ -211,9 +241,10 @@ app.get(
 
   (req, res) => {
 
-    res.redirect(
-      process.env.FRONTEND_URL ? `${process.env.FRONTEND_URL}/dashboard` : "http://localhost:5173/dashboard"
-    );
+    const frontendUrl = process.env.NODE_ENV === "production" && process.env.FRONTEND_URL
+      ? process.env.FRONTEND_URL
+      : "http://localhost:5173";
+    res.redirect(`${frontendUrl}/dashboard`);
 
   }
 );
