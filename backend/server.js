@@ -163,7 +163,7 @@ app.get("/auth/logout", (req, res) => {
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10
+  max: 100
 });
 
 app.post("/register", authLimiter, async (req, res) => {
