@@ -8,6 +8,10 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const crypto = require("crypto");
 
+/* FORCE IPV4 */
+const dns = require("dns");
+dns.setDefaultResultOrder("ipv4first");
+
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const session = require("express-session");
@@ -91,6 +95,7 @@ passport.use(new GoogleStrategy({
 },
   async (accessToken, refreshToken, profile, done) => {
     try {
+
       let user = await User.findOne({
         email: profile.emails[0].value
       });
@@ -123,19 +128,25 @@ passport.deserializeUser(async (id, done) => {
 ========================= */
 
 app.get("/auth/login/success", (req, res) => {
+
   if (req.user) {
+
     res.status(200).json({
       success: true,
       user: req.user
     });
+
   } else {
+
     res.status(401).json({
       success: false
     });
+
   }
 });
 
 /* FORCE ACCOUNT CHOOSER */
+
 app.get("/auth/google",
   passport.authenticate("google", {
     scope: ["profile", "email"],
@@ -162,10 +173,15 @@ app.get("/auth/google/callback",
 /* LOGOUT */
 
 app.get("/auth/logout", (req, res) => {
+
   req.logout(() => {
+
     req.session.destroy(() => {
+
       res.redirect(process.env.FRONTEND_URL);
+
     });
+
   });
 });
 
@@ -179,22 +195,27 @@ const authLimiter = rateLimit({
 });
 
 app.post("/register", authLimiter, async (req, res) => {
+
   try {
 
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
+
       return res.status(400).json({
         message: "All fields required"
       });
+
     }
 
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
+
       return res.status(400).json({
         message: "Email already exists"
       });
+
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -216,6 +237,7 @@ app.post("/register", authLimiter, async (req, res) => {
     res.status(500).json({
       message: "Registration Failed"
     });
+
   }
 });
 
@@ -232,15 +254,19 @@ app.post("/send-otp", authLimiter, async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
+
       return res.status(400).json({
         message: "User not found"
       });
+
     }
 
     if (!user.password) {
+
       return res.status(400).json({
         message: "Use Google Sign In"
       });
+
     }
 
     const validPassword = await bcrypt.compare(
@@ -249,9 +275,11 @@ app.post("/send-otp", authLimiter, async (req, res) => {
     );
 
     if (!validPassword) {
+
       return res.status(400).json({
         message: "Wrong password"
       });
+
     }
 
     const otp = crypto.randomInt(100000, 999999).toString();
@@ -260,13 +288,12 @@ app.post("/send-otp", authLimiter, async (req, res) => {
 
     await user.save();
 
-    /* FIXED NODEMAILER TRANSPORTER */
+    /* FIXED NODEMAILER */
 
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 465,
       secure: true,
-      family: 4,
       auth: {
         user: process.env.EMAIL,
         pass: process.env.EMAIL_PASS
@@ -291,6 +318,7 @@ app.post("/send-otp", authLimiter, async (req, res) => {
     res.status(500).json({
       message: "OTP Failed"
     });
+
   }
 });
 
@@ -307,15 +335,19 @@ app.post("/verify-otp", async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
+
       return res.status(400).json({
         message: "User not found"
       });
+
     }
 
     if (user.otp !== otp) {
+
       return res.status(400).json({
         message: "Invalid OTP"
       });
+
     }
 
     user.otp = "";
@@ -334,6 +366,7 @@ app.post("/verify-otp", async (req, res) => {
     res.status(500).json({
       message: "OTP Verification Failed"
     });
+
   }
 });
 
