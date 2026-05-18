@@ -293,6 +293,9 @@ app.post("/send-otp", authLimiter, async (req, res) => {
       accessToken: process.env.EMAILJS_PRIVATE_KEY,
       template_params: {
         to_email: email,
+        email: email,
+        user_email: email,
+        reply_to: email,
         message: `Your OTP is ${otp}`,
         otp: otp
       }
