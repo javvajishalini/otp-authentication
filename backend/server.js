@@ -29,7 +29,12 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:") || allowedOrigins.includes(origin)) {
+    if (
+      !origin ||
+      origin.startsWith("http://localhost:") ||
+      origin.startsWith("http://127.0.0.1:") ||
+      allowedOrigins.includes(origin)
+    ) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
@@ -80,7 +85,9 @@ const User = mongoose.model("User", new mongoose.Schema({
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: process.env.GOOGLE_CALLBACK_URL || "http://localhost:5000/auth/google/callback"
+  callbackURL:
+    process.env.GOOGLE_CALLBACK_URL ||
+    "http://localhost:5000/auth/google/callback"
 },
   async (accessToken, refreshToken, profile, done) => {
     try {
@@ -96,6 +103,7 @@ passport.use(new GoogleStrategy({
       }
 
       return done(null, user);
+
     } catch (err) {
       console.log(err);
     }
@@ -127,7 +135,7 @@ app.get("/auth/login/success", (req, res) => {
   }
 });
 
-/* 🔥 FIXED: force account chooser */
+/* FORCE ACCOUNT CHOOSER */
 app.get("/auth/google",
   passport.authenticate("google", {
     scope: ["profile", "email"],
@@ -140,15 +148,19 @@ app.get("/auth/google/callback",
     failureRedirect: "/"
   }),
   (req, res) => {
-    const frontendUrl = process.env.NODE_ENV === "production" && process.env.FRONTEND_URL
-      ? process.env.FRONTEND_URL
-      : "http://localhost:5173";
+
+    const frontendUrl =
+      process.env.NODE_ENV === "production" &&
+        process.env.FRONTEND_URL
+        ? process.env.FRONTEND_URL
+        : "http://localhost:5173";
 
     res.redirect(`${frontendUrl}/dashboard`);
   }
 );
 
-/* 🔥 OPTIONAL logout (for testing) */
+/* LOGOUT */
+
 app.get("/auth/logout", (req, res) => {
   req.logout(() => {
     req.session.destroy(() => {
@@ -168,60 +180,96 @@ const authLimiter = rateLimit({
 
 app.post("/register", authLimiter, async (req, res) => {
   try {
+
     const { name, email, password } = req.body;
 
-    if (!name || !email || !password)
-      return res.status(400).json({ message: "All fields required" });
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        message: "All fields required"
+      });
+    }
 
     const existingUser = await User.findOne({ email });
-    if (existingUser)
-      return res.status(400).json({ message: "Email already exists" });
+
+    if (existingUser) {
+      return res.status(400).json({
+        message: "Email already exists"
+      });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await User.create({ name, email, password: hashedPassword });
+    await User.create({
+      name,
+      email,
+      password: hashedPassword
+    });
 
-    res.status(201).json({ message: "Registered Successfully" });
+    res.status(201).json({
+      message: "Registered Successfully"
+    });
 
   } catch (err) {
+
     console.log("REGISTER ERROR:", err);
-    res.status(500).json({ message: "Registration Failed" });
+
+    res.status(500).json({
+      message: "Registration Failed"
+    });
   }
 });
 
 /* =========================
-   SEND OTP (🔥 FIXED SMTP)
+   SEND OTP
 ========================= */
 
 app.post("/send-otp", authLimiter, async (req, res) => {
+
   try {
+
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "User not found" });
 
-    if (!user.password)
-      return res.status(400).json({ message: "Use Google Sign In" });
+    if (!user) {
+      return res.status(400).json({
+        message: "User not found"
+      });
+    }
 
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword)
-      return res.status(400).json({ message: "Wrong password" });
+    if (!user.password) {
+      return res.status(400).json({
+        message: "Use Google Sign In"
+      });
+    }
+
+    const validPassword = await bcrypt.compare(
+      password,
+      user.password
+    );
+
+    if (!validPassword) {
+      return res.status(400).json({
+        message: "Wrong password"
+      });
+    }
 
     const otp = crypto.randomInt(100000, 999999).toString();
+
     user.otp = otp;
+
     await user.save();
 
-    /* 🔥 FIXED TRANSPORTER */
+    /* FIXED NODEMAILER TRANSPORTER */
+
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
+      port: 465,
+      secure: true,
+      family: 4,
       auth: {
         user: process.env.EMAIL,
         pass: process.env.EMAIL_PASS
-      },
-      tls: {
-        rejectUnauthorized: false
       }
     });
 
@@ -232,11 +280,17 @@ app.post("/send-otp", authLimiter, async (req, res) => {
       text: `Your OTP is ${otp}`
     });
 
-    res.json({ message: "OTP Sent Successfully" });
+    res.json({
+      message: "OTP Sent Successfully"
+    });
 
   } catch (err) {
+
     console.log("OTP ERROR:", err);
-    res.status(500).json({ message: "OTP Failed" });
+
+    res.status(500).json({
+      message: "OTP Failed"
+    });
   }
 });
 
@@ -245,17 +299,27 @@ app.post("/send-otp", authLimiter, async (req, res) => {
 ========================= */
 
 app.post("/verify-otp", async (req, res) => {
+
   try {
+
     const { email, otp } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user)
-      return res.status(400).json({ message: "User not found" });
 
-    if (user.otp !== otp)
-      return res.status(400).json({ message: "Invalid OTP" });
+    if (!user) {
+      return res.status(400).json({
+        message: "User not found"
+      });
+    }
+
+    if (user.otp !== otp) {
+      return res.status(400).json({
+        message: "Invalid OTP"
+      });
+    }
 
     user.otp = "";
+
     await user.save();
 
     res.json({
@@ -264,8 +328,12 @@ app.post("/verify-otp", async (req, res) => {
     });
 
   } catch (err) {
+
     console.log(err);
-    res.status(500).json({ message: "OTP Verification Failed" });
+
+    res.status(500).json({
+      message: "OTP Verification Failed"
+    });
   }
 });
 
@@ -274,6 +342,7 @@ app.post("/verify-otp", async (req, res) => {
 ========================= */
 
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
