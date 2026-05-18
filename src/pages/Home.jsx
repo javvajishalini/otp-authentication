@@ -9,7 +9,7 @@ export default function Home() {
     <div className="container">
       <div className="card">
 
-        <img src={logo} alt="OTP Authentication Logo" className="logo" style={{ width: '80px', marginBottom: '10px' }} />
+        <img src={logo} alt="OTP Authentication Logo" className="logo" style={{ width: '80px', marginBottom: '10px', borderRadius: '50%' }} />
 
         <h1>OTP Authentication System</h1>
 
