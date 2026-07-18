@@ -127,14 +127,21 @@ input {
   position: absolute;
   top: 20px;
   right: 20px;
-  padding: 10px 15px;
-  border-radius: 20px;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
   border: 1px solid var(--border-color, #333);
   background: var(--card-bg, rgba(255,255,255,0.05));
   color: var(--text-color, #ffffff);
   cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   box-shadow: 0 0 10px var(--shadow, rgba(255,255,255,0.1));
   transition: all 0.3s;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
 }

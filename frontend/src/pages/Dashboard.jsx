@@ -48,6 +48,7 @@ export default function Dashboard() {
         <div className="verified">
           ✅ Verified Successfully
         </div>
+        <button className="signin-btn" onClick={() => navigate("/profile")}>Profile Settings</button>
       </div>
     </div>
   );

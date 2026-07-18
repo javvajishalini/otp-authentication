@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import VerifyOTP from "./pages/VerifyOTP";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
 
 import "./index.css";
 
@@ -23,18 +24,16 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <button className="theme-toggle" onClick={toggleTheme}>
-        {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+      <button className="theme-toggle" onClick={toggleTheme} title="Toggle Theme">
+        {theme === "dark" ? "☀️" : "🌙"}
       </button>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/verify" element={<VerifyOTP />} />
         <Route path="/register" element={<Register />} />
-        <Route
-          path="/dashboard"
-          element={<Dashboard />}
-        />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>
   );

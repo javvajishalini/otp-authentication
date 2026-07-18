@@ -64,6 +64,16 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+app.use(async (req, res, next) => {
+  if (req.session && req.session.userId && !req.user) {
+    try {
+      const user = await User.findById(req.session.userId);
+      if (user) req.user = user;
+    } catch (e) {}
+  }
+  next();
+});
+
 /* =========================
    MONGODB
 ========================= */
@@ -405,10 +415,13 @@ app.post("/verify-otp", async (req, res) => {
 
     await user.save();
 
-    res.json({
-      message: "Login Successful",
-      user
-    });
+      // Set session for OTP login
+      req.session.userId = user._id;
+      await req.session.save();
+      res.json({
+        message: "Login Successful",
+        user
+      });
 
   } catch (err) {
 
@@ -419,6 +432,21 @@ app.post("/verify-otp", async (req, res) => {
     });
 
   }
+});
+
+// Profile routes (protected)
+app.get('/profile', async (req, res) => {
+  if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+  res.json({ user: req.user });
+});
+
+app.put('/profile', async (req, res) => {
+  if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+  const { name, password } = req.body;
+  if (name) req.user.name = name;
+  if (password) req.user.password = await bcrypt.hash(password, 10);
+  await req.user.save();
+  res.json({ message: 'Profile updated', user: req.user });
 });
 
 /* =========================
