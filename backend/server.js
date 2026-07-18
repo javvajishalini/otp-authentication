@@ -28,7 +28,8 @@ app.set("trust proxy", 1);
 app.use(helmet());
 
 const allowedOrigins = [
-  process.env.FRONTEND_URL
+  process.env.FRONTEND_URL,
+  "http://localhost:5173"
 ].filter(Boolean);
 
 app.use(cors({
@@ -67,9 +68,17 @@ app.use(passport.session());
    MONGODB
 ========================= */
 
-mongoose.connect(process.env.MONGO_URI)
+const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/otp-auth";
+
+if (!process.env.MONGO_URI) {
+  console.log("⚠️ MONGO_URI not found in .env. Falling back to local MongoDB:", MONGO_URI);
+}
+
+mongoose.connect(MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
-  .catch(err => console.log(err));
+  .catch(err => {
+    console.error("MongoDB connection error. Make sure MongoDB is running locally!", err.message);
+  });
 
 /* =========================
    USER MODEL
@@ -86,45 +95,56 @@ const User = mongoose.model("User", new mongoose.Schema({
    GOOGLE AUTH
 ========================= */
 
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: "/auth/google/callback"
-},
-  async (accessToken, refreshToken, profile, done) => {
-    try {
+const BACKEND_URL = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`;
 
-      let user = await User.findOne({
-        email: profile.emails[0].value
-      });
-
-      if (!user) {
-        user = await User.create({
-          name: profile.displayName,
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: `${BACKEND_URL}/auth/google/callback`
+  },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+  
+        let user = await User.findOne({
           email: profile.emails[0].value
         });
-      } else {
-        // Update name to full Google Display Name if they had registered with a partial name earlier
-        if (user.name !== profile.displayName) {
-          user.name = profile.displayName;
-          await user.save();
+  
+        if (!user) {
+          user = await User.create({
+            name: profile.displayName,
+            email: profile.emails[0].value
+          });
+        } else {
+          // Update name to full Google Display Name if they had registered with a partial name earlier
+          if (user.name !== profile.displayName) {
+            user.name = profile.displayName;
+            await user.save();
+          }
         }
+  
+        return done(null, user);
+  
+      } catch (err) {
+        console.error("Google auth error:", err);
+        return done(err, null);
       }
-
-      return done(null, user);
-
-    } catch (err) {
-      console.log(err);
-    }
-  }));
+    }));
+} else {
+  console.log("⚠️ GOOGLE_CLIENT_ID missing in .env. Google Sign-In will be disabled.");
+}
 
 passport.serializeUser((user, done) => {
   done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
-  const user = await User.findById(id);
-  done(null, user);
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (err) {
+    done(err, null);
+  }
 });
 
 /* =========================
@@ -151,12 +171,15 @@ app.get("/auth/login/success", (req, res) => {
 
 /* FORCE ACCOUNT CHOOSER */
 
-app.get("/auth/google",
+app.get("/auth/google", (req, res, next) => {
+  if (!process.env.GOOGLE_CLIENT_ID) {
+    return res.status(400).send("Google Sign-In is not configured for local development. Please add GOOGLE_CLIENT_ID to your .env file.");
+  }
   passport.authenticate("google", {
     scope: ["profile", "email"],
     prompt: "select_account"
-  })
-);
+  })(req, res, next);
+});
 
 app.get("/auth/google/callback",
   passport.authenticate("google", {
@@ -165,10 +188,7 @@ app.get("/auth/google/callback",
   (req, res) => {
 
     const frontendUrl =
-      process.env.NODE_ENV === "production" &&
-        process.env.FRONTEND_URL
-        ? process.env.FRONTEND_URL
-        : "http://localhost:5173";
+      process.env.FRONTEND_URL || "http://localhost:5173";
 
     res.redirect(`${frontendUrl}/dashboard`);
   }
@@ -182,7 +202,8 @@ app.get("/auth/logout", (req, res) => {
 
     req.session.destroy(() => {
 
-      res.redirect(process.env.FRONTEND_URL);
+      const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+      res.redirect(frontendUrl);
 
     });
 
@@ -234,7 +255,7 @@ app.post("/register", authLimiter, async (req, res) => {
 
   } catch (err) {
 
-    console.log("REGISTER ERROR:", err);
+    console.error("REGISTER ERROR:", err);
 
     res.status(500).json({
       message: "Registration Failed"
@@ -252,6 +273,10 @@ app.post("/send-otp", authLimiter, async (req, res) => {
   try {
 
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
 
     const user = await User.findOne({ email });
 
@@ -290,8 +315,15 @@ app.post("/send-otp", authLimiter, async (req, res) => {
 
     await user.save();
 
-    /* FIXED NODEMAILER TO EMAILJS */
-    
+    /* EMAILJS REST API OR LOCAL MOCK */
+    if (!process.env.EMAILJS_SERVICE_ID || !process.env.EMAILJS_TEMPLATE_ID || !process.env.EMAILJS_PUBLIC_KEY || !process.env.EMAILJS_PRIVATE_KEY) {
+      console.log(`\n======================================================`);
+      console.log(`[LOCAL DEV] EmailJS credentials missing in .env`);
+      console.log(`[LOCAL DEV] OTP for ${email} is: ${otp}`);
+      console.log(`======================================================\n`);
+      return res.json({ message: "OTP Generated (Check server console)" });
+    }
+
     const emailJsPayload = {
       service_id: process.env.EMAILJS_SERVICE_ID,
       template_id: process.env.EMAILJS_TEMPLATE_ID,
@@ -304,7 +336,9 @@ app.post("/send-otp", authLimiter, async (req, res) => {
         reply_to: email,
         message: `Your OTP is ${otp}`,
         otp: otp,
-        OTP: otp
+        OTP: otp,
+        passcode: otp,
+        time: new Date(Date.now() + 5 * 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
     };
 
@@ -316,7 +350,7 @@ app.post("/send-otp", authLimiter, async (req, res) => {
 
     if (!emailJsResponse.ok) {
       const errorText = await emailJsResponse.text();
-      console.log("EMAILJS ERROR:", errorText);
+      console.error("EMAILJS ERROR:", errorText);
       return res.status(500).json({ message: "OTP Failed" });
     }
 
@@ -326,7 +360,7 @@ app.post("/send-otp", authLimiter, async (req, res) => {
 
   } catch (err) {
 
-    console.log("OTP ERROR:", err);
+    console.error("OTP ERROR:", err);
 
     res.status(500).json({
       message: "OTP Failed"
@@ -345,6 +379,10 @@ app.post("/verify-otp", async (req, res) => {
 
     const { email, otp } = req.body;
 
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and OTP are required" });
+    }
+
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -355,7 +393,7 @@ app.post("/verify-otp", async (req, res) => {
 
     }
 
-    if (user.otp !== otp) {
+    if (!user.otp || user.otp !== otp) {
 
       return res.status(400).json({
         message: "Invalid OTP"
@@ -374,7 +412,7 @@ app.post("/verify-otp", async (req, res) => {
 
   } catch (err) {
 
-    console.log(err);
+    console.error("VERIFY OTP ERROR:", err);
 
     res.status(500).json({
       message: "OTP Verification Failed"

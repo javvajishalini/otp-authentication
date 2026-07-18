@@ -1,0 +1,7 @@
+⚠️ THIS FOLDER IS DEPRECATED
+=====================================
+The React frontend has been moved to:
+  otp-authentication-1/frontend/
+
+Please use the frontend/ directory instead.
+This backend/src/ folder can be safely deleted.
