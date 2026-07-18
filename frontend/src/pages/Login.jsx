@@ -28,7 +28,7 @@ export default function Login() {
 
       localStorage.setItem("email", email);
       alert("OTP sent successfully");
-      navigate("/verify");
+      navigate("/verify", { state: { password } });
     } catch (err) {
       alert(err.response?.data?.message || "Failed to send OTP. Please try again.");
     } finally {
