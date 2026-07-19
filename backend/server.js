@@ -54,6 +54,11 @@ app.use(cors({
       callback(null, true);
       return;
     }
+    // Allow any Vercel deployment URL for this project
+    if (origin.startsWith('https://otp-authentication') && origin.endsWith('vercel.app')) {
+      callback(null, true);
+      return;
+    }
     // Disallow everything else
     callback(new Error('Not allowed by CORS'));
   },
