@@ -1,14 +1,16 @@
 # OTP Authentication System
 
-A full-stack web application that provides secure OTP (One-Time Password) based authentication along with Google OAuth integration.
+A full-stack web application that provides secure OTP (One-Time Password) based authentication along with Google OAuth integration and a premium, modern glassmorphism UI.
 
 ## Features
 
-- **User Registration** — Secure account creation with password hashing (bcryptjs)
-- **OTP-based Login** — Users authenticate by receiving a One-Time Password via email
-- **Email Delivery** — Integrated with **EmailJS** to reliably deliver OTPs to user email addresses
-- **Google OAuth Login** — Alternative sign-in option using Google accounts (Passport.js)
-- **Light/Dark Mode** — Seamless theme toggle on the frontend
+- **User Registration** — Secure account creation with password hashing (bcryptjs).
+- **OTP-based Login** — Users authenticate by receiving a One-Time Password via email.
+- **Password Reset Flow** — Complete "Forgot Password" feature allowing users to securely reset their passwords via OTP.
+- **Email Delivery** — Integrated with **EmailJS** to reliably deliver OTPs to user email addresses.
+- **Google OAuth Login** — Alternative sign-in option using Google accounts (Passport.js).
+- **Premium UI/UX** — Fully responsive glassmorphism design with modern typography, smooth animations, and interactive elements.
+- **Light/Dark Mode** — Seamless theme toggle on the frontend.
 
 ## Tech Stack
 
@@ -16,7 +18,7 @@ A full-stack web application that provides secure OTP (One-Time Password) based 
 - **React 19** + **Vite**
 - **React Router DOM** (navigation)
 - **Axios** (API requests)
-- **Vanilla CSS** (light/dark theme via CSS variables)
+- **Vanilla CSS** (light/dark theme via CSS variables, glassmorphism)
 
 ### Backend (`backend/`)
 - **Node.js** + **Express.js**
@@ -38,12 +40,19 @@ otp-authentication-1/
 │   ├── src/
 │   │   ├── assets/
 │   │   │   └── logo.jpg
+│   │   ├── components/
+│   │   │   └── Header.jsx
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx
 │   │   ├── pages/
 │   │   │   ├── Home.jsx
 │   │   │   ├── Login.jsx
 │   │   │   ├── Register.jsx
 │   │   │   ├── VerifyOTP.jsx
-│   │   │   └── Dashboard.jsx
+│   │   │   ├── ForgotPassword.jsx
+│   │   │   ├── ResetPassword.jsx
+│   │   │   ├── Dashboard.jsx
+│   │   │   └── Profile.jsx
 │   │   ├── App.jsx
 │   │   ├── App.css
 │   │   ├── index.css
@@ -62,8 +71,12 @@ otp-authentication-1/
 │   ├── .env                   ← Copy from .env.example and fill in
 │   └── .env.example
 │
-└── README.md
+├── .gitignore
+├── README.md
+└── vercel.json
 ```
+
+*(Note: If you see duplicate React files like `src`, `public`, `package.json` in the root folder, they can be safely deleted. The app strictly runs from `frontend/` and `backend/`.)*
 
 ---
 
@@ -79,17 +92,12 @@ otp-authentication-1/
 
 ### Step 1 — Set up the Backend
 
-**1a. Copy assets from old directories to frontend (one-time step):**
-> If you're running for the first time, copy image assets manually:
-> - Copy everything from `src/assets/` → `frontend/src/assets/`
-> - Copy everything from `public/` → `frontend/public/`
-
-**1b. Open a terminal in the `backend/` folder:**
+**1a. Open a terminal in the `backend/` folder:**
 ```bash
 cd backend
 ```
 
-**1c. Create the `.env` file:**
+**1b. Create the `.env` file:**
 ```bash
 # Copy the example file
 copy .env.example .env
@@ -110,12 +118,12 @@ EMAILJS_PRIVATE_KEY=your_private_key
 NODE_ENV=development
 ```
 
-**1d. Install dependencies:**
+**1c. Install dependencies:**
 ```bash
 npm install
 ```
 
-**1e. Start the backend:**
+**1d. Start the backend:**
 ```bash
 npm run dev        # development (hot-reload with nodemon)
 # OR
@@ -156,18 +164,6 @@ npm run dev
 Visit **http://localhost:5173** in your browser.
 
 ---
-
-## Errors Fixed
-
-| Error | Fix |
-|-------|-----|
-| Missing `vite.config.js` | Created — frontend now starts correctly |
-| Duplicate React frontend inside `backend/` | Removed — clean separation |
-| `backend/package.json` had unused `nodemailer`, `resend`, `mongodb` | Removed — cleaner deps |
-| Google OAuth `callbackURL` was relative | Fixed — now uses `BACKEND_URL` env var |
-| Logout crash if `FRONTEND_URL` was undefined | Fixed — falls back to `localhost:5173` |
-| No input validation on `/send-otp` and `/verify-otp` | Added validation |
-| `MONGO_URI` undefined caused confusing crash | Added startup check with clear error message |
 
 ## Deployment
 

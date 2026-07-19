@@ -1,4 +1,7 @@
+import React from "react";
 import { useNavigate } from "react-router-dom";
+
+
 import logo from "../assets/logo.jpg";
 
 export default function Home() {
@@ -6,10 +9,13 @@ export default function Home() {
   const navigate = useNavigate();
 
   return (
-    <div className="container">
-      <div className="card">
+    <React.Fragment>
+      <div className="container">
 
-        <img src={logo} alt="OTP Authentication Logo" className="logo" style={{ width: '80px', marginBottom: '10px', borderRadius: '50%' }} />
+        <div className="card">
+          <div className="logo-container">
+            <img src={logo} alt="OTP logo" className="app-logo" />
+          </div>
 
         <h1>OTP Authentication System</h1>
 
@@ -46,5 +52,6 @@ export default function Home() {
 
       </div>
     </div>
+    </React.Fragment>
   );
 }
